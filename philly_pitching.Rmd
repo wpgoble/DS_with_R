@@ -1,0 +1,135 @@
+---
+title: "Phillies_Pitching"
+author: "William Goble"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE}
+rm(list = ls())
+library(baseballr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+
+```{r cars}
+wheeler_id <- baseballr::playerid_lookup(last_name = "Wheeler", first_name = "Zack")
+noal_id <- baseballr::playerid_lookup(last_name = "Nola", first_name = "Aaron")
+```
+
+```{r}
+nola <- playerid_lookup(last_name = "Nola", first_name = "Aaron") %>% 
+  select(mlbam_id, first_name, last_name)
+
+nola_22 <- statcast_search("2022-10-07", "2022-10-28", playerid = nola[1, 1], 
+                              player_type = "pitcher")
+#glimpse(nola_22)
+unique(nola_22$game_type)
+```
+
+```{r}
+nola_data %>% dplyr::glimpse()
+```
+
+```{r}
+clean_nola <- nola_data %>% 
+  dplyr::filter(!is.na(pfx_x), !is.na(pfx_z),
+                game_type == "F", game_type == "D", game_type == "L", game_type == "W") %>% 
+  dplyr::mutate(pfx_x_in_px = -12*pfx_x,
+                pft_z_in_pz = 12*pfx_z)
+```
+
+```{r}
+pitch_colors <- c("FF" = "red",
+                  "FT" = "blue",
+                  "SI" = "cyan",
+                  "FC" = "violet",
+                  "FS" = "black",
+                  "CU" = "green",
+                  "CB" = "green",
+                  "KC" = "pink",
+                  "SL" = "orange",
+                  "CH" = "gray50",
+                  "SF" = "beige",
+                  "KN" = "gold",
+                  "PO" = "cornflowerblue",
+                  "IN" = "lightcoral")
+nola_pitch_type <- unique(clean_nola$pitch_type)
+```
+
+```{r}
+clean_nola %>% 
+  ggplot(aes(x = pfx_x_in_px, pft_z_in_pz, color = pitch_type)) + 
+  geom_vline(xintercept = 0) + 
+  geom_hline(yintercept = 0) + 
+  geom_point(size = 1.5, alpha = 0.45) + 
+  scale_color_manual(values = pitch_colors,
+                     limits = nola_pitch_type) + 
+  scale_x_continuous(limits = c(-25, 25),
+                     breaks = c(-20, 20, 5),
+                     labels = scales::number_format(suffix = "\"")) + 
+  scale_y_continuous(limits = c(-25, 25),
+                     breaks = c(-20, 20, 5),
+                     labels = scales::number_format(suffix = "\"")) +
+  coord_equal() + 
+  labs(title = "Aaron Nola Pitch Movement",
+       subtitle = "Pitcher's POV",
+       caption = "Data: Baseball Savant via baseballr",
+       x = "Horizontal Break",
+       y = "Induced Vertical Break",
+       color = "Pitch Name")
+```
+
+```{r}
+wheeler <- playerid_lookup(last_name = "Wheeler") %>% 
+  filter(first_name == "Zack") %>% 
+  select(mlbam_id, first_name, last_name) %>% 
+  glimpse()
+```
+
+```{r}
+wheeler_22 <- statcast_search("2022-10-07", "2022-10-28", playerid = wheeler[1, 1], 
+                              player_type = "pitcher")
+glimpse(wheeler_22)
+```
+
+```{r}
+unique(wheeler_22$game_type)
+
+clean_wheeler <- wheeler_22 %>% 
+  dplyr::filter(!is.na(pfx_x), !is.na(pfx_z),
+                game_type == "F", game_type == "D", game_type == "L", game_type == "W") %>% 
+  dplyr::mutate(pfx_x_in_px = -12*pfx_x,
+                pft_z_in_pz = 12*pfx_z)
+wheeler_pitch_type <- unique(clean_wheeler$pitch_type)
+```
+
+```{r}
+clean_wheeler %>% 
+  ggplot(aes(x = pfx_x_in_px, pft_z_in_pz, color = pitch_type)) + 
+  geom_vline(xintercept = 0) + 
+  geom_hline(yintercept = 0) + 
+  geom_point(size = 1.5, alpha = 0.45) + 
+  scale_color_manual(values = pitch_colors,
+                     limits = wheeler_pitch_type) + 
+  scale_x_continuous(limits = c(-25, 25),
+                     breaks = c(-20, 20, 5),
+                     labels = scales::number_format(suffix = "\"")) + 
+  scale_y_continuous(limits = c(-25, 25),
+                     breaks = c(-20, 20, 5),
+                     labels = scales::number_format(suffix = "\"")) +
+  coord_equal() + 
+  labs(title = "Zack Wheeler Pitch Movement",
+       subtitle = "2022 Season | Pitcher's POV",
+       caption = "Data: Baseball Savant via baseballr",
+       x = "Horizontal Break",
+       y = "Induced Vertical Break",
+       color = "Pitch Name")
+```
+
